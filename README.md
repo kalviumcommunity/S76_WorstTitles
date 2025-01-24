@@ -4,6 +4,7 @@ Welcome to the ** S76_WorstTitles**, This project takes a fun look at some of th
 
 ## Milestone 1: Project Overview
 
+
 #### 1. Understanding the MERN Stack:
 **MongoDB :** A database for storing application data in a flexible, document based format.
 **Express.js :** A backend web application framework for building APIs and handling server logics.
