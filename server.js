@@ -7,9 +7,10 @@ const dotenv =require("dotenv");
 const connectDatabase = require('./database');
 const mongoose = require('mongoose');
 
-app.get('/ping', (req, res) => {
-    res.send('Pong!');
-});
+dotenv.config();
+const Routes = require("./routes");
+app.use(express.json());
+app.use('/api',Routes);
 
 connectDatabase();
 
