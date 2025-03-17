@@ -27,3 +27,6 @@ Authentication ensures only the right people can access certain features. For ex
 - It keeps the app secure by verifying users' identities.
 
  https://s76-worsttitles-1.onrender.com
+
+ ### Frotnend deployment
+## https://sweet-starburst-4a5014.netlify.app/
