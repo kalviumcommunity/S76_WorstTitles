@@ -1,6 +1,14 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const User = require('./schema');
+
+const worstTitleSchema = new mongoose.Schema({
+    worst_titles: Array,
+});
+
+const WorstTitle = mongoose.model("worst_tittles", worstTitleSchema);
+
 
 // Create a new user (POST)
 router.post('/users', async (req, res) => {
@@ -45,5 +53,20 @@ router.delete('/users/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+router.get("/worst-titles", async (req, res) => {
+    try {
+        const titleData = await WorstTitle.find(); // Returns an array
+        if (titleData.length > 0) {
+            const allWorstTitles = titleData.flatMap(item => item.worst_titles); // Fixed field name
+            res.json(allWorstTitles);
+        } else {
+            res.status(404).json({ message: "No worst titles found" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching worst titles" });
+    }
+});
+
 
 module.exports = router;
