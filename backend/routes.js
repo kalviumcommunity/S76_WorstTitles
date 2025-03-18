@@ -4,11 +4,13 @@ const router = express.Router();
 const User = require('./schema');
 
 const worstTitleSchema = new mongoose.Schema({
-    worst_titles: Array,
+    id: Number,
+    name: String,
+    category: String,
+    description: String
 });
 
 const WorstTitle = mongoose.model("worst_tittles", worstTitleSchema);
-
 
 // Create a new user (POST)
 router.post('/users', async (req, res) => {
@@ -54,12 +56,12 @@ router.delete('/users/:id', async (req, res) => {
     }
 });
 
+// Get worst movie titles (GET)
 router.get("/worst-titles", async (req, res) => {
     try {
         const titleData = await WorstTitle.find(); // Returns an array
         if (titleData.length > 0) {
-            const allWorstTitles = titleData.flatMap(item => item.worst_titles); // Fixed field name
-            res.json(allWorstTitles);
+            res.json(titleData);
         } else {
             res.status(404).json({ message: "No worst titles found" });
         }
@@ -68,5 +70,19 @@ router.get("/worst-titles", async (req, res) => {
     }
 });
 
+// Add new worst title (POST)
+router.post("/worst-titles", async (req, res) => {
+    try {
+        const { id, name, category, description } = req.body;
+        if (!id || !name || !category || !description) return res.status(400).json({ message: "All fields are required" });
+
+        const newTitle = new WorstTitle({ id, name, category, description });
+        await newTitle.save();
+
+        res.status(201).json({ message: "Title added successfully", newTitle });
+    } catch (error) {
+        res.status(500).json({ message: "Error adding title" });
+    }
+});
 
 module.exports = router;

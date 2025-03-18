@@ -1,8 +1,10 @@
 import React from "react";
 import banner from "../assets/images/hero.jpg";
 import { FaLightbulb, FaCogs, FaChartLine, FaUsers } from "react-icons/fa";
+import {useNavigate} from 'react-router-dom'
 
 const Features = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-16 bg-gray-100">
       <h2 className="text-4xl font-bold text-center mb-12">Why Choose Us?</h2>
@@ -50,6 +52,7 @@ const Footer = () => {
 };
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   return (
     <>
       <div className="relative h-screen w-screen overflow-hidden">
@@ -67,7 +70,8 @@ const LandingPage = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
           <h1 className="text-8xl font-bold text-black">WORST TITLES</h1>
           <p className="text-3xl font-semibold text-gray-700 mt-4">Discover the most innovative and unconventional titles on the market today.</p>
-          <button className="px-12 py-4 text-white font-semibold bg-black rounded-md hover:bg-gray-800 mt-6">Explore Now</button>
+          <button className="px-12 py-4 text-white font-semibold bg-black rounded-md hover:bg-gray-800 mt-6"
+          onClick={() => navigate("/tittle-card")}>Explore Now</button>
         </div>
       </div>
       <Features />
