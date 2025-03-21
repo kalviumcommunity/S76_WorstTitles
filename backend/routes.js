@@ -84,5 +84,38 @@ router.post("/worst-titles", async (req, res) => {
         res.status(500).json({ message: "Error adding title" });
     }
 });
+// Update a worst title by ID (PUT)
+router.put("/worst-titles/:id", async (req, res) => {
+    try {
+        const updatedTitle = await WorstTitle.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedTitle) return res.status(404).json({ message: "Title not found" });
+        res.status(200).json(updatedTitle);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating title" });
+    }
+});
+
+// Delete a worst title by ID (DELETE)
+router.delete("/worst-titles/:id", async (req, res) => {
+    try {
+        const deletedTitle = await WorstTitle.findByIdAndDelete(req.params.id);
+        if (!deletedTitle) return res.status(404).json({ message: "Title not found" });
+        res.status(200).json({ message: "Title deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting title" });
+    }
+});
+
+// Get a worst movie title by ID (GET)
+router.get("/worst-titles/:id", async (req, res) => {
+    try {
+        const title = await WorstTitle.findById(req.params.id);
+        if (!title) return res.status(404).json({ message: "Title not found" });
+        res.status(200).json(title);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching title" });
+    }
+});
+
 
 module.exports = router;
