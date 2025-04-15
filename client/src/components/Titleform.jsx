@@ -20,55 +20,53 @@ export default function AddMovieTitle() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate input fields
-    if (!formData.name || !formData.category || !formData.description || !formData.id) {
+    // Validate all fields
+    const { id, name, category, description } = formData;
+    if (!id || !name || !category || !description) {
       alert("All fields are required!");
       return;
     }
 
-    // Ensure id is a valid integer
-    const titleId = parseInt(formData.id, 10);
-    if (isNaN(titleId)) {
-      alert("Please provide a valid ID.");
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId) || parsedId <= 0) {
+      alert("ID must be a positive number.");
       return;
     }
 
-    // Get userId from localStorage
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
+    const userId = parseInt(localStorage.getItem("userId"), 10);
+    if (!userId || isNaN(userId)) {
       alert("No valid user selected. Please select a user before adding a title.");
       return;
     }
 
-    // Prepare data to send to the backend
-    const dataToSend = {
-      ...formData,
-      id: titleId,  // Send id as an integer
+    const payload = {
+      id: parsedId,
+      name,
+      category,
+      description,
       created_by: userId,
     };
 
     try {
-      // Send data to the backend
       const response = await fetch("http://localhost:5000/api/worst-titles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Success message and redirect
         alert("Movie title added successfully!");
         localStorage.removeItem("userId");
         setFormData({ id: "", name: "", category: "", description: "" });
         navigate("/");
       } else {
-        setMessage(data.message || "Error adding title");
+        setMessage(data.message || "Error adding title.");
       }
     } catch (error) {
       console.error("Error:", error);
-      setMessage("Failed to connect to server.");
+      setMessage("Failed to connect to the server.");
     }
   };
 
