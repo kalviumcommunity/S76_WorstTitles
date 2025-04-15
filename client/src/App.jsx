@@ -12,7 +12,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/tittle-card" element={<WorstTitle/>} />
-        <Route path = "/add-tittle" element = {<AddMovieTitle/>}/>
+        <Route path="/add-title" element={<AddMovieTitle />} />
         <Route path = "/update-title/:id" element = {<UpdateMovieTitle/>}/>
       </Routes>  
       </BrowserRouter>

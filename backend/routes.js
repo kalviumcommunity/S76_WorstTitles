@@ -2,32 +2,23 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
-const User = require('./schema');
+const User = require('./models/schema');
+const WorstTitle = require('./models/title');
 
-const worstTitleSchema = new mongoose.Schema({
-    id: Number,
-    name: String,
-    category: String,
-    description: String
-});
-
-const WorstTitle = mongoose.model("worst_tittles", worstTitleSchema);
-
-// Middleware for handling validation errors
+// Middleware for validation
 const validateRequest = (req, res, next) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     next();
 };
 
-// Create a new user (POST)
-router.post('/users', 
+// ----------------- USER ROUTES -----------------
+
+router.post('/users',
     [
-        body('name').notEmpty().withMessage('Name is required'),
-        body('email').isEmail().withMessage('Invalid email format'),
-        body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+        body('name').notEmpty(),
+        body('email').isEmail(),
+        body('password').isLength({ min: 6 })
     ],
     validateRequest,
     async (req, res) => {
@@ -44,19 +35,19 @@ router.post('/users',
 
 router.get('/users', async (req, res) => {
     try {
-        const users = await User.find();
+        const users = await User.find({}, 'name email');
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-router.put('/users/:id', 
+router.put('/users/:id',
     [
-        param('id').isMongoId().withMessage('Invalid user ID'),
-        body('name').optional().notEmpty().withMessage('Name cannot be empty'),
-        body('email').optional().isEmail().withMessage('Invalid email format'),
-        body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+        param('id').isMongoId(),
+        body('name').optional().notEmpty(),
+        body('email').optional().isEmail(),
+        body('password').optional().isLength({ min: 6 })
     ],
     validateRequest,
     async (req, res) => {
@@ -70,9 +61,8 @@ router.put('/users/:id',
     }
 );
 
-
-router.delete('/users/:id', 
-    [param('id').isMongoId().withMessage('Invalid user ID')],
+router.delete('/users/:id',
+    [param('id').isMongoId()],
     validateRequest,
     async (req, res) => {
         try {
@@ -85,45 +75,75 @@ router.delete('/users/:id',
     }
 );
 
-router.get("/worst-titles", async (req, res) => {
-    try {
-        const titleData = await WorstTitle.find();
-        if (titleData.length > 0) {
-            res.json(titleData);
-        } else {
-            res.status(404).json({ message: "No worst titles found" });
-        }
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching worst titles" });
-    }
-});
+// ----------------- WORST TITLE ROUTES -----------------
 
-router.post("/worst-titles", 
+// ✅ Create a worst title
+router.post("/worst-titles",
     [
-        body('id').isInt().withMessage('ID must be a number'),
-        body('name').notEmpty().withMessage('Name is required'),
-        body('category').notEmpty().withMessage('Category is required'),
-        body('description').notEmpty().withMessage('Description is required')
+        body('id').isInt({ min: 1 }),
+        body('name').notEmpty(),
+        body('category').notEmpty(),
+        body('description').notEmpty(),
+        body('created_by').isMongoId().withMessage('Valid user ID required')
     ],
     validateRequest,
     async (req, res) => {
         try {
-            const { id, name, category, description } = req.body;
-            const newTitle = new WorstTitle({ id, name, category, description });
+            const { id, name, category, description, created_by } = req.body;
+
+            const user = await User.findById(created_by);
+            if (!user) return res.status(400).json({ message: "User not found" });
+
+            const existing = await WorstTitle.findOne({ id });
+            if (existing) return res.status(400).json({ message: "Title ID already exists" });
+
+            const newTitle = new WorstTitle({ id, name, category, description, created_by });
             await newTitle.save();
-            res.status(201).json({ message: "Title added successfully", newTitle });
+
+            res.status(201).json(newTitle);
         } catch (error) {
             res.status(500).json({ message: "Error adding title" });
         }
     }
 );
 
-router.put("/worst-titles/:id", 
+// ✅ Get all worst titles (optional filter by created_by)
+router.get("/worst-titles", async (req, res) => {
+    try {
+        const { created_by } = req.query;
+        const query = created_by ? { created_by } : {};
+        const titles = await WorstTitle.find(query).populate('created_by', 'name email');
+
+        if (titles.length === 0) return res.status(404).json({ message: "No worst titles found" });
+
+        res.status(200).json(titles);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching worst titles" });
+    }
+});
+
+// ✅ Get worst title by Mongo ID
+router.get("/worst-titles/:id",
+    [param('id').isMongoId()],
+    validateRequest,
+    async (req, res) => {
+        try {
+            const title = await WorstTitle.findById(req.params.id).populate('created_by', 'name email');
+            if (!title) return res.status(404).json({ message: "Title not found" });
+            res.status(200).json(title);
+        } catch (error) {
+            res.status(500).json({ message: "Error fetching title" });
+        }
+    }
+);
+
+// ✅ Update worst title
+router.put("/worst-titles/:id",
     [
-        param('id').isMongoId().withMessage('Invalid title ID'),
-        body('name').optional().notEmpty().withMessage('Name cannot be empty'),
-        body('category').optional().notEmpty().withMessage('Category cannot be empty'),
-        body('description').optional().notEmpty().withMessage('Description cannot be empty')
+        param('id').isMongoId(),
+        body('name').optional().notEmpty(),
+        body('category').optional().notEmpty(),
+        body('description').optional().notEmpty()
     ],
     validateRequest,
     async (req, res) => {
@@ -137,8 +157,9 @@ router.put("/worst-titles/:id",
     }
 );
 
-router.delete("/worst-titles/:id", 
-    [param('id').isMongoId().withMessage('Invalid title ID')],
+// ✅ Delete worst title
+router.delete("/worst-titles/:id",
+    [param('id').isMongoId()],
     validateRequest,
     async (req, res) => {
         try {
@@ -147,20 +168,6 @@ router.delete("/worst-titles/:id",
             res.status(200).json({ message: "Title deleted successfully" });
         } catch (error) {
             res.status(500).json({ message: "Error deleting title" });
-        }
-    }
-);
-
-router.get("/worst-titles/:id", 
-    [param('id').isMongoId().withMessage('Invalid title ID')],
-    validateRequest,
-    async (req, res) => {
-        try {
-            const title = await WorstTitle.findById(req.params.id);
-            if (!title) return res.status(404).json({ message: "Title not found" });
-            res.status(200).json(title);
-        } catch (error) {
-            res.status(500).json({ message: "Error fetching title" });
         }
     }
 );
