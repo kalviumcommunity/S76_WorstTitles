@@ -41,7 +41,7 @@ const WorstTitle = () => {
     if (!window.confirm("Are you sure you want to delete this title?")) return;
     try {
       await axios.delete(`http://localhost:5000/api/worst-titles/${id}`);
-      const updated = titles.filter((title) => title._id !== id);
+      const updated = titles.filter((title) => title.id !== id);
       setTitles(updated);
       setAllTitles(updated);
     } catch (err) {
@@ -55,7 +55,7 @@ const WorstTitle = () => {
     if (email === "") {
       setTitles(allTitles);
     } else {
-      const filtered = allTitles.filter((title) => title.created_by?.email === email);
+      const filtered = allTitles.filter((title) => title.email === email);
       setTitles(filtered);
     }
   };
@@ -74,7 +74,7 @@ const WorstTitle = () => {
           >
             <option value="">All Users</option>
             {users.map((user) => (
-              <option key={user._id} value={user.email}>
+              <option key={user.id} value={user.email}>
                 {user.email}
               </option>
             ))}
@@ -88,7 +88,7 @@ const WorstTitle = () => {
             onClick={() => {
               const selectedUser = users.find((user) => user.email === selectedEmail);
               if (selectedUser) {
-                localStorage.setItem("userId", selectedUser._id);
+                localStorage.setItem("userId", selectedUser.id);
                 navigate("/add-title");
               }
             }}
@@ -107,24 +107,24 @@ const WorstTitle = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {titles.map((title) => (
-            <div key={title._id} className="bg-white p-6 rounded shadow-md w-full text-center">
+            <div key={title.id} className="bg-white p-6 rounded shadow-md w-full text-center">
               <h2 className="text-xl font-bold">{title.name}</h2>
               <p className="text-gray-600 text-sm mt-2">{title.category}</p>
               <p className="text-gray-700 mt-4">{title.description}</p>
               <p className="text-sm text-gray-500 mt-1">
-                <strong>Added by:</strong> {title.created_by?.email || "Unknown"}
+                <strong>Added by:</strong> {title.email || "Unknown"}
               </p>
 
               <div className="mt-4 flex justify-center gap-2">
                 <button
                   className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                  onClick={() => navigate(`/update-title/${title._id}`)}
+                  onClick={() => navigate(`/update-title/${title.id}`)}
                 >
                   Update
                 </button>
                 <button
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                  onClick={() => handleDelete(title._id)}
+                  onClick={() => handleDelete(title.id)}
                 >
                   Delete
                 </button>

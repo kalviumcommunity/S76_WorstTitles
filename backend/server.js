@@ -4,17 +4,17 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 const dotenv =require("dotenv");
-const connectDatabase = require('./database');
+const connectDatabase = require('./Database/mysqlConection');
 const mongoose = require('mongoose');
 const cors = require('cors');
 app.use(cors());
 
 dotenv.config();
-const Routes = require("./routes");
+const Routes = require("./routes/routesSql");
 app.use(express.json());
 app.use('/api',Routes);
 
-connectDatabase();
+// connectDatabase();
 
 app.get('/', (req, res) => {
     let dbStatus;
