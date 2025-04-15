@@ -29,6 +29,46 @@ router.post('/users',
     }
 );
 
+
+router.post(
+  "/login",
+  [
+    body("email").isEmail(),
+    body("password").notEmpty()
+  ],
+  validateRequest,
+  (req, res) => {
+    const { email, password } = req.body;
+
+    const sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+    db.query(sql, [email, password], (err, results) => {
+      if (err) return res.status(500).json({ message: err.message });
+
+      if (results.length === 0) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      const user = results[0];
+
+      
+      res.cookie("username", user.name, {
+        httpOnly: true,
+        sameSite: "strict",
+        
+        maxAge: 24 * 60 * 60 * 1000, 
+      });
+
+      res.status(200).json({ message: "Logged in", user: { id: user.id, name: user.name, email: user.email } });
+    });
+  }
+);
+
+router.post("/logout", (req, res) => {
+    res.clearCookie("username", { path: "/" });
+    res.status(200).json({ message: "Logged out successfully" });
+  });
+  
+
 router.get('/users', (req, res) => {
     db.query('SELECT id, name, email FROM users', (err, results) => {
         if (err) return res.status(500).json({ message: err.message });
