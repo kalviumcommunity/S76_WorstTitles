@@ -1,9 +1,10 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
-const db = require('../Database/mysqlConection'); // Adjust path if needed
+const db = require('../Database/mysqlConection');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = "SubaASAP";
 
-// Middleware
 const validateRequest = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -31,42 +32,50 @@ router.post('/users',
 
 
 router.post(
-  "/login",
-  [
-    body("email").isEmail(),
-    body("password").notEmpty()
-  ],
-  validateRequest,
-  (req, res) => {
-    const { email, password } = req.body;
-
-    const sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-    db.query(sql, [email, password], (err, results) => {
-      if (err) return res.status(500).json({ message: err.message });
-
-      if (results.length === 0) {
-        return res.status(401).json({ message: "Invalid email or password" });
-      }
-
-      const user = results[0];
-
-      
-      res.cookie("username", user.name, {
-        httpOnly: true,
-        sameSite: "strict",
-        
-        maxAge: 24 * 60 * 60 * 1000, 
+    "/login",
+    [
+      body("email").isEmail(),
+      body("password").notEmpty()
+    ],
+    validateRequest,
+    (req, res) => {
+      const { email, password } = req.body;
+  
+      const sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+      db.query(sql, [email, password], (err, results) => {
+        if (err) return res.status(500).json({ message: err.message });
+  
+        if (results.length === 0) {
+          return res.status(401).json({ message: "Invalid email or password" });
+        }
+  
+        const user = results[0];
+  
+        const token = jwt.sign(
+          { id: user.id, email: user.email, name: user.name },
+          JWT_SECRET,
+          { expiresIn: "1d" }
+        );
+  
+        res.cookie("token", token, {
+          httpOnly: true,
+          sameSite: "strict",
+          maxAge: 24 * 60 * 60 * 1000 // 1 day
+        });
+  
+        res.status(200).json({
+          message: "Logged in",
+          user: { id: user.id, name: user.name, email: user.email }
+        });
       });
+    }
+  );
 
-      res.status(200).json({ message: "Logged in", user: { id: user.id, name: user.name, email: user.email } });
-    });
-  }
-);
-
-router.post("/logout", (req, res) => {
-    res.clearCookie("username", { path: "/" });
+  router.post("/logout", (req, res) => {
+    res.clearCookie("token", { path: "/" });
     res.status(200).json({ message: "Logged out successfully" });
   });
+  
   
 
 router.get('/users', (req, res) => {
